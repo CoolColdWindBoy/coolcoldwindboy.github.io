@@ -152,8 +152,8 @@
             var base = 1.2;
             //var h = y / graphWidth * (hmax - hmin);//linear y to h
             //console.log(y+' '+h);
-            var h=Math.pow(base, y/graphWidth*Math.log(84852)/Math.log(base));//logarithm scale
-            //var h = (-8485.2 / (0.9 * y / graphWidth - 1) - 8485.2) / 0.9;//1/x
+            //var h=Math.pow(base, y/graphWidth*Math.log(84852)/Math.log(base));//logarithm scale
+            var h = (-8485.2 / (0.9 * y / graphWidth - 1) - 8485.2) / 0.9;//1/x
             var p = new ISA(h).p;
             this.y = graphWidth - y;
             this.x = border + p / (pmax - pmin) * graphWidth;
@@ -195,7 +195,7 @@
     var labels = document.getElementsByClassName('label');
     for (var i = 0; i < 7; i++) {
         var h = baseAlts[i];
-        //labels[i].style = 'top:' + (-labels[i].offsetHeight / 2 + graphWidth * (1-(-8485.2 / (0.9 * h + 8485.2) + 1) / 0.9)) + 'px;';//1/x
+        labels[i].style = 'top:' + (-labels[i].offsetHeight / 2 + graphWidth * (1-(-8485.2 / (0.9 * h + 8485.2) + 1) / 0.9)) + 'px;';//1/x
         //labels[i].style = 'top:'+(-labels[i].offsetHeight/2+graphWidth*(1-h/(hmax-hmin)))+'px;';//linear
 
         //console.log(labels[i].offsetHeight);
@@ -206,8 +206,8 @@
     for (var i = 0; i < labels.length; i++) {
         var h = i*1000;
 
-        //labels[i].style = 'left:' + (border - labels[i].offsetWidth) + 'px;'
-//+ 'top:' + (-labels[i].offsetHeight / 2 + graphWidth * (1-(-8485.2 / (0.9 * h + 8485.2) + 1) / 0.9)) + 'px;';//1/x
+        labels[i].style = 'left:' + (border - labels[i].offsetWidth) + 'px;'
++ 'top:' + (-labels[i].offsetHeight / 2 + graphWidth * (1-(-8485.2 / (0.9 * h + 8485.2) + 1) / 0.9)) + 'px;';//1/x
         //+'top:'+(-labels[i].offsetHeight / 2 + graphWidth * (1-h/8485.2))+'px;';        //linear
 //console.log(labels[i].offsetHeight);
         //console.log((-labels[i].height/2 + (-8485.2/(0.9*h+8485.2)+1)/0.9));
