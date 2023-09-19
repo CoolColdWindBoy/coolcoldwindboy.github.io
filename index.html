@@ -1,0 +1,218 @@
+<head>
+    <title>ISA</title>
+    <link rel='stylesheet' href='./ISA.css'>
+    <meta charset="UTF-8">
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+</head>
+
+<body>
+    <div class='main'>
+        <div class='heading'>
+            <h2>ISA Calculator</h2>
+        </div>
+        <div class='alt-input-div'>
+            <input class='alt-input' placeholder='Altitude in meters'>
+            <button class='calc-btn' onclick='Calculate()'>Calculate</button>
+        </div>
+        <div class='alt-result-div'>
+            <p class='result-p'>p =</p>
+            <p class='result-rho'>ρ =</p>
+            <p class='result-T'>T =</p>
+            <p class='result-HG'>HG =</p>
+        </div>
+
+        <div class='canvas-wrap'>
+            <canvas id='canvas'></canvas>
+            <p class='label'>0</p>
+            <p class='label'>11k</p>
+            <p class='label'>20k</p>
+            <p class='label'>32k</p>
+            <p class='label'>47k</p>
+            <p class='label'>51k</p>
+            <p class='label'>71k</p>
+            <div class='lowheightmarker'></div>
+            <div class='lowheightmarker'></div>
+            <div class='lowheightmarker'></div>
+            <div class='lowheightmarker'></div>
+            <div class='lowheightmarker'></div>
+            <div class='lowheightmarker'></div>
+            <div class='lowheightmarker'></div>
+            <div class='lowheightmarker'></div>
+            <div class='lowheightmarker'></div>
+            <div class='lowheightmarker'></div>
+            <div class='lowheightmarker'></div>
+        </div>
+
+    </div>
+
+</body>
+
+<script>
+
+    class StandardAlt {
+        constructor(baseAlt, a, T, p) {
+            this.baseAlt = baseAlt;
+            this.a = a;
+            this.T = T;
+            this.p = p;
+        }
+    };
+
+    const g = 9.80665;
+    const Re = 6371000;
+    const R = 287;
+
+    const lapseRates = [-0.0065, 0, 0.001, 0.0028, 0, -0.0028, -0.002, 0];
+    const baseAlts = [0, 11000, 20000, 32000, 47000, 51000, 71000, 84852];
+
+    var standardAlts = [];
+    var standardAlt0 = new StandardAlt(0, lapseRates[0], 288.15, 101325);
+    standardAlts.push(standardAlt0);
+
+    for (var i = 1; i < 8; i++) {
+        var standardAlt = new StandardAlt(baseAlts[i], lapseRates[i], 0, 0);
+        standardAlt.T = standardAlts[i - 1].T + standardAlts[i - 1].a * (standardAlt.baseAlt - standardAlts[i - 1].baseAlt);
+        if (standardAlt.T == standardAlts[i - 1].T) {//isothermic
+            standardAlt.p = standardAlts[i - 1].p * Math.exp(-g / R / standardAlt.T * (standardAlt.baseAlt - standardAlts[i - 1].baseAlt));
+        } else {//gradient
+            standardAlt.p = standardAlts[i - 1].p * Math.pow(standardAlt.T / standardAlts[i - 1].T, -g / standardAlts[i - 1].a / R);
+        }
+        standardAlts.push(standardAlt);
+        //console.log(i+': '+ standardAlts[i].p);
+    }
+
+
+    class ISA {
+        constructor(alt) {
+            this.alt = alt;
+            for (var i = 0; i < 7; i++) {
+                if (alt >= standardAlts[i].baseAlt && alt <= standardAlts[i + 1].baseAlt) {
+                    var p;
+                    var T = standardAlts[i].T + standardAlts[i].a * (alt - standardAlts[i].baseAlt);
+                    //console.log(i);
+                    if (standardAlts[i].a == 0) {
+                        p = standardAlts[i].p * Math.exp(-g / R / standardAlts[i].T * (alt - standardAlts[i].baseAlt));
+                    } else {
+                        p = standardAlts[i].p * Math.pow(T / standardAlts[i].T, -g / standardAlts[i].a / R);
+                    }
+                    var rho = p / T / R;
+                    this.T = T;
+                    this.p = p;
+                    this.rho = rho;
+                    break;
+                }
+            }
+
+
+        }
+    }
+
+
+    function Calculate() {
+        h = document.getElementsByClassName('alt-input')[0].value;
+        if (h == null || h == '') {
+            return;
+        }
+        if (h < 0 || h > 84852) {
+            alert('Please enter an altitude within the range of 0 to 84852');
+            return;
+        }
+        var isa = new ISA(h);
+        document.getElementsByClassName('result-p')[0].textContent = 'p = ' + isa.p.toFixed(4) + 'Pa = ' + (isa.p / 101325 * 100).toFixed(4) + '% p0';
+        document.getElementsByClassName('result-rho')[0].textContent = 'ρ = ' + isa.rho.toFixed(6) + 'kg/m³';
+        document.getElementsByClassName('result-T')[0].textContent = 'T = ' + parseFloat(isa.T.toFixed(6)) + 'K = ' + parseFloat((isa.T - 273.15).toFixed(6)) + '°C';
+        document.getElementsByClassName('result-HG')[0].textContent = 'HG = ' + parseFloat((Re * isa.alt / (Re - isa.alt)).toFixed(2)) + 'm';
+    }
+
+    var canvas = document.getElementById('canvas');
+    canvas.style.backgroundColor = '#fff';
+    canvas.style.width = '100%';
+    var canvasWidth = canvas.offsetWidth;
+    canvas.style.height = canvasWidth + 'px';
+    canvas.width = canvasWidth;
+    canvas.height = canvasWidth;
+
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'white';
+
+    const border = 24;
+
+    ctx.fillRect(border, 0, canvasWidth - border, canvasWidth - border);
+    var graphWidth = canvasWidth - border;
+    var step = 5;
+    var hmax = 84852;
+    var hmin = 0;
+    var pmax = 101325;
+    var pmin = new ISA(84852).p;
+
+    var points = [];
+
+    class HeightToPoint {
+        constructor(y) {//x = f(y)
+            var base = 1.2;
+            //var h = y / graphWidth * (hmax - hmin);//linear y to h
+            //console.log(y+' '+h);
+            var h=Math.pow(base, y/graphWidth*Math.log(84852)/Math.log(base));//logarithm scale
+            //var h = (-8485.2 / (0.9 * y / graphWidth - 1) - 8485.2) / 0.9;//1/x
+            var p = new ISA(h).p;
+            this.y = graphWidth - y;
+            this.x = border + p / (pmax - pmin) * graphWidth;
+        }
+    };
+
+    for (var j = 0; j < graphWidth; j += step) {//vertically
+        var point = new HeightToPoint(j);
+        points.push(point);
+    }
+    var point = new HeightToPoint(graphWidth);
+    points.push(point);
+
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    for (var i = 0; i < points.length - 1; i++) {
+        ctx.beginPath();
+        ctx.moveTo(points[i].x, points[i].y);
+        ctx.lineTo(points[i + 1].x, points[i + 1].y);
+        ctx.stroke();
+        ctx.closePath();
+    }
+
+    ctx.strokeStyle = 'grey';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(border, 0);
+    ctx.lineTo(border, graphWidth);
+    ctx.stroke();
+    ctx.closePath();
+    ctx.beginPath();
+    ctx.moveTo(border, graphWidth);
+    ctx.lineTo(graphWidth+border, graphWidth);
+    ctx.stroke();
+    ctx.closePath();
+
+    var labels = document.getElementsByClassName('label');
+    for (var i = 0; i < 7; i++) {
+        var h = baseAlts[i];
+        //labels[i].style = 'top:' + (-labels[i].offsetHeight / 2 + graphWidth * (1-(-8485.2 / (0.9 * h + 8485.2) + 1) / 0.9)) + 'px;';//1/x
+        //labels[i].style = 'top:'+(-labels[i].offsetHeight/2+graphWidth*(1-h/(hmax-hmin)))+'px;';//linear
+
+        //console.log(labels[i].offsetHeight);
+        //console.log((-labels[i].height/2 + (-8485.2/(0.9*h+8485.2)+1)/0.9));
+    }
+
+    labels = document.getElementsByClassName('lowheightmarker');
+    for (var i = 0; i < labels.length; i++) {
+        var h = i*1000;
+
+        //labels[i].style = 'left:' + (border - labels[i].offsetWidth) + 'px;'
+//+ 'top:' + (-labels[i].offsetHeight / 2 + graphWidth * (1-(-8485.2 / (0.9 * h + 8485.2) + 1) / 0.9)) + 'px;';//1/x
+        //+'top:'+(-labels[i].offsetHeight / 2 + graphWidth * (1-h/8485.2))+'px;';        //linear
+//console.log(labels[i].offsetHeight);
+        //console.log((-labels[i].height/2 + (-8485.2/(0.9*h+8485.2)+1)/0.9));
+    }
+
+
+
+</script>
