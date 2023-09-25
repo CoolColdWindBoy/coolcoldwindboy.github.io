@@ -43,6 +43,9 @@
             <div class='lowheightmarker'></div>
         </div>
 
+        <input type="range" min="1" max="999" value="900" class="slider" id="myRange">
+        <p class='sliderindicator'></p>
+
     </div>
 
 </body>
@@ -137,13 +140,32 @@
 
     const border = 24;
 
-    ctx.fillRect(border, 0, canvasWidth - border, canvasWidth - border);
+
     var graphWidth = canvasWidth - border;
     var step = 5;
     var hmax = 84852;
     var hmin = 0;
     var pmax = 101325;
     var pmin = new ISA(84852).p;
+
+    var scalingFactor = 0.9;
+
+    var slider = document.getElementById("myRange");
+    var sliderindicator = document.getElementsByClassName('sliderindicator')[0];
+
+slider.oninput = function() {
+  scalingFactor = this.value/1000;
+  var sliderindicator = document.getElementsByClassName('sliderindicator')[0];
+    draw();
+}
+
+draw();
+
+function draw(){
+    sliderindicator.textContent = scalingFactor;
+    ctx.fillRect(border, 0, canvasWidth - border, canvasWidth - border);
+
+
 
     var points = [];
 
@@ -153,7 +175,7 @@
             //var h = y / graphWidth * (hmax - hmin);//linear y to h
             //console.log(y+' '+h);
             //var h=Math.pow(base, y/graphWidth*Math.log(84852)/Math.log(base));//logarithm scale
-            var h = (-8485.2 / (0.9 * y / graphWidth - 1) - 8485.2) / 0.9;//1/x
+            var h = (-(84852*(1-scalingFactor)) / (scalingFactor * y / graphWidth - 1) - (84852*(1-scalingFactor))) / scalingFactor;//1/x
             var p = new ISA(h).p;
             this.y = graphWidth - y;
             this.x = border + p / (pmax - pmin) * graphWidth;
@@ -195,7 +217,7 @@
     var labels = document.getElementsByClassName('label');
     for (var i = 0; i < 7; i++) {
         var h = baseAlts[i];
-        labels[i].style = 'top:' + (-labels[i].offsetHeight / 2 + graphWidth * (1-(-8485.2 / (0.9 * h + 8485.2) + 1) / 0.9)) + 'px;';//1/x
+        labels[i].style = 'top:' + (-labels[i].offsetHeight / 2 + graphWidth * (1-(-(84852*(1-scalingFactor)) / (scalingFactor * h + (84852*(1-scalingFactor))) + 1) / scalingFactor)) + 'px;';//1/x
         //labels[i].style = 'top:'+(-labels[i].offsetHeight/2+graphWidth*(1-h/(hmax-hmin)))+'px;';//linear
 
         //console.log(labels[i].offsetHeight);
@@ -207,12 +229,12 @@
         var h = i*1000;
 
         labels[i].style = 'left:' + (border - labels[i].offsetWidth) + 'px;'
-+ 'top:' + (-labels[i].offsetHeight / 2 + graphWidth * (1-(-8485.2 / (0.9 * h + 8485.2) + 1) / 0.9)) + 'px;';//1/x
++ 'top:' + (-labels[i].offsetHeight / 2 + graphWidth * (1-(-(84852*(1-scalingFactor)) / (scalingFactor * h + (84852*(1-scalingFactor))) + 1) / scalingFactor)) + 'px;';//1/x
         //+'top:'+(-labels[i].offsetHeight / 2 + graphWidth * (1-h/8485.2))+'px;';        //linear
 //console.log(labels[i].offsetHeight);
         //console.log((-labels[i].height/2 + (-8485.2/(0.9*h+8485.2)+1)/0.9));
     }
 
 
-
+}
 </script>
